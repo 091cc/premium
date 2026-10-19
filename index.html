@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>premuim</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #eef1f6;
+    --paper: #ffffff;
+    --ink: #1b2a4a;
+    --ink-soft: #5b6784;
+    --line: #cdd5e3;
+    --accent: #0e7c86;
+    --accent-ink: #ffffff;
+    --unlocked: #e0a526;
+    --danger: #c0392b;
+    --radius: 4px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1626;
+      --paper: #18223a;
+      --ink: #e7ecf7;
+      --ink-soft: #94a0bd;
+      --line: #2c3856;
+      --accent: #3bb6c1;
+      --accent-ink: #08202a;
+      --unlocked: #f0b93a;
+      --danger: #ef7567;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: "Noto Sans TC", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  h1, h2 { font-family: "Noto Serif TC", serif; margin: 0; }
+  button { font: inherit; cursor: pointer; }
+  button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+
+  /* ---------- 登入畫面 ---------- */
+  .login {
+    min-height: 100vh; display: grid; place-items: center; padding: 24px;
+  }
+  .login-card {
+    background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 40px 32px; width: min(420px, 100%); text-align: center;
+  }
+  .login-card h1 { font-size: 2rem; font-weight: 900; margin-bottom: 8px; }
+  .login-card p { color: var(--ink-soft); margin: 0 0 28px; }
+
+  /* ---------- 按鈕 ---------- */
+  .btn {
+    border: 1px solid var(--ink); background: transparent; color: var(--ink);
+    padding: 8px 16px; border-radius: var(--radius); font-weight: 500;
+  }
+  .btn:hover { background: var(--ink); color: var(--bg); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .btn.primary:hover { filter: brightness(1.08); background: var(--accent); color: var(--accent-ink); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* ---------- 頂部列 ---------- */
+  header.bar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    padding: 12px 24px; background: var(--paper); border-bottom: 1px solid var(--line);
+  }
+  .brand { font-family: "Noto Serif TC", serif; font-weight: 900; font-size: 1.25rem; }
+  .account { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .who { text-align: right; line-height: 1.3; }
+  .who strong { display: block; font-size: .95rem; }
+  .who span { font-size: .8rem; color: var(--ink-soft); }
+  .points {
+    display: flex; align-items: baseline; gap: 6px;
+    border: 2px solid var(--unlocked); border-radius: var(--radius); padding: 2px 12px;
+  }
+  .points b { font-family: "Noto Serif TC", serif; font-size: 1.5rem; }
+  .points small { color: var(--ink-soft); }
+
+  /* ---------- 主內容 ---------- */
+  main { max-width: 960px; margin: 0 auto; padding: 24px; }
+  .redeem {
+    background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 32px;
+  }
+  .redeem label { font-weight: 700; }
+  .redeem input {
+    flex: 1 1 200px; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--bg); color: var(--ink); font: inherit; letter-spacing: .05em;
+  }
+  .subject { margin-bottom: 36px; }
+  .subject h2 {
+    font-size: 1.4rem; padding-bottom: 8px; margin-bottom: 16px;
+    border-bottom: 3px solid var(--ink);
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .subject h2 small { font-family: "Noto Sans TC", sans-serif; font-weight: 400; font-size: .85rem; color: var(--ink-soft); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+  .q {
+    position: relative; padding: 14px 12px 12px; text-align: left;
+    background: var(--paper); color: var(--ink);
+    border: 1px solid var(--line); border-left: 5px solid var(--line); border-radius: var(--radius);
+    transition: border-color .15s, transform .15s;
+  }
+  .q:hover { border-color: var(--accent); border-left-color: var(--accent); transform: translateY(-2px); }
+  .q .no { display: block; font-family: "Noto Serif TC", serif; font-weight: 600; font-size: 1.1rem; }
+  .q .state { font-size: .8rem; color: var(--ink-soft); }
+  .q.owned { border-left-color: var(--unlocked); }
+  .q.owned .state { color: var(--unlocked); font-weight: 700; }
+  .empty { color: var(--ink-soft); }
+
+  /* ---------- Modal ---------- */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(10, 16, 30, .6);
+    display: grid; place-items: center; padding: 24px; z-index: 50;
+  }
+  .modal {
+    background: var(--paper); color: var(--ink); border-radius: var(--radius);
+    padding: 28px; width: min(400px, 100%); border-top: 6px solid var(--accent);
+  }
+  .modal h2 { font-size: 1.3rem; margin-bottom: 8px; }
+  .modal p { margin: 0 0 16px; color: var(--ink-soft); }
+  .modal input {
+    width: 100%; padding: 10px 12px; margin-bottom: 8px; font: inherit;
+    border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); color: var(--ink);
+  }
+  .modal .err { color: var(--danger); min-height: 1.5em; font-size: .9rem; margin: 0 0 8px; }
+  .modal .actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: var(--bg); padding: 10px 20px; border-radius: var(--radius);
+    z-index: 60; max-width: calc(100% - 32px);
+  }
+  @media (prefers-reduced-motion: reduce) { .q { transition: none; } .q:hover { transform: none; } }
+  @media (max-width: 560px) { header.bar { padding: 10px 14px; } main { padding: 16px; } .who { text-align: left; } }
+</style>
+</head>
+<body>
+
+<!-- 登入畫面 -->
+<section id="login" class="login" hidden>
+  <div class="login-card">
+    <h1>解答解鎖站</h1>
+    <p>登入後輸入通行碼，即可使用點數解鎖題目解答。</p>
+    <button id="btnLogin" class="btn primary">使用 Google 登入</button>
+  </div>
+</section>
+
+<!-- 主畫面（通過登入與通行碼後才顯示） -->
+<div id="app" hidden>
+  <header class="bar">
+    <div class="brand">解答解鎖站</div>
+    <div class="account">
+      <div class="who"><strong id="uName"></strong><span id="uEmail"></span></div>
+      <div class="points" aria-live="polite"><small>剩餘</small><b id="uPoints">0</b><small>點</small></div>
+      <button id="btnLogout" class="btn">登出</button>
+    </div>
+  </header>
+  <main>
+    <form id="redeemForm" class="redeem">
+      <label for="redeemInput">兌換序號</label>
+      <input id="redeemInput" autocomplete="off" placeholder="請輸入序號">
+      <button class="btn primary" type="submit" id="btnRedeem">兌換</button>
+    </form>
+    <div id="subjects"></div>
+  </main>
+</div>
+
+<!-- 共用彈窗 -->
+<div id="overlay" class="overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <h2 id="mTitle"></h2>
+    <p id="mText"></p>
+    <input id="mInput" hidden autocomplete="off">
+    <p id="mErr" class="err" role="alert"></p>
+    <div class="actions">
+      <button id="mCancel" class="btn">取消</button>
+      <button id="mOk" class="btn primary">確認</button>
+    </div>
+  </div>
+</div>
+<div id="toast" hidden></div>
+
+<script type="module">
+/* =====================================================================
+ * 1. 開發者設定區
+ * ===================================================================== */
+
+// (A) Firebase 專案設定：Firebase Console → 專案設定 → 您的應用程式 → SDK 設定
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+// (B) 題庫設定：新增科目或題目只需修改這裡，畫面會自動產生。
+//     每題的唯一鍵為「科目 id-題號」，購買紀錄以此為準，請勿在上線後更改 id。
+const CATALOG = [
+  {
+    id: "chinese", name: "國文",
+    questions: [
+      { no: 1, url: "https://github.com" },
+      { no: 2, url: "https://github.com" },
+      { no: 3, url: "https://github.com" },
+      { no: 4, url: "https://github.com" },
+      { no: 5, url: "https://github.com" }
+    ]
+  },
+  {
+    id: "math", name: "數學",
+    questions: [
+      { no: 1, url: "https://github.com" },
+      { no: 2, url: "https://github.com" },
+      { no: 3, url: "https://github.com" },
+      { no: 4, url: "https://github.com" },
+      { no: 5, url: "https://github.com" },
+      { no: 6, url: "https://github.com" }
+    ]
+  },
+  {
+    id: "science", name: "自然",
+    questions: [
+      { no: 1, url: "https://github.com" },
+      { no: 2, url: "https://github.com" },
+      { no: 3, url: "https://github.com" },
+      { no: 4, url: "https://github.com" }
+    ]
+  }
+];
+
+// (C) 數值設定。注意：Security Rules 內也寫死了 10 點，兩邊要一致。
+const COST_PER_QUESTION = 10;
+const WELCOME_POINTS = 10;
+
+/* =====================================================================
+ * 2. Firebase 初始化
+ * ===================================================================== */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {
+  getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc, runTransaction, onSnapshot, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+/* =====================================================================
+ * 3. 小工具：畫面切換、彈窗、提示
+ * ===================================================================== */
+const $ = (id) => document.getElementById(id);
+let unsubUser = null;
+let userData = null;      // 即時同步的 users/{uid} 資料
+let busy = false;         // 防止連點造成重複扣款
+
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg; t.hidden = false;
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => (t.hidden = true), 2600);
+}
+
+// 通用彈窗：回傳 Promise。有 input 時，onSubmit 可回傳錯誤訊息字串來阻止關閉。
+function openModal({ title, text, okText = "確認", cancelText = "取消", input = false, cancelable = true, onSubmit }) {
+  return new Promise((resolve) => {
+    $("mTitle").textContent = title;
+    $("mText").textContent = text;
+    $("mOk").textContent = okText;
+    $("mCancel").textContent = cancelText;
+    $("mCancel").hidden = !cancelable;
+    $("mErr").textContent = "";
+    const inp = $("mInput");
+    inp.hidden = !input; inp.value = "";
+    $("overlay").hidden = false;
+    (input ? inp : $("mOk")).focus();
+
+    const close = (val) => {
+      $("overlay").hidden = true;
+      $("mOk").onclick = $("mCancel").onclick = inp.onkeydown = null;
+      resolve(val);
+    };
+    const submit = async () => {
+      $("mOk").disabled = true;
+      const err = onSubmit ? await onSubmit(inp.value) : null;
+      $("mOk").disabled = false;
+      if (err) { $("mErr").textContent = err; return; }
+      close(input ? inp.value : true);
+    };
+    $("mOk").onclick = submit;
+    $("mCancel").onclick = () => close(null);
+    inp.onkeydown = (e) => { if (e.key === "Enter") submit(); };
+  });
+}
+
+function showScreen(name) {   // "login" | "app" | "none"
+  $("login").hidden = name !== "login";
+  $("app").hidden = name !== "app";
+}
+
+/* =====================================================================
+ * 4. 登入 / 登出
+ * ===================================================================== */
+$("btnLogin").onclick = async () => {
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch (e) { if (e.code !== "auth/popup-closed-by-user") toast("登入失敗：" + e.code); }
+};
+$("btnLogout").onclick = () => signOut(auth);
+
+onAuthStateChanged(auth, async (user) => {
+  if (unsubUser) { unsubUser(); unsubUser = null; }
+  userData = null;
+  if (!user) { showScreen("login"); return; }
+
+  showScreen("none");                       // 通過通行碼前不顯示主要內容
+  const ok = await askPasscode(user);
+  if (!ok) { await signOut(auth); return; } // 取消通行碼 → 登出
+  await ensureUserDoc(user);
+
+  $("uName").textContent = user.displayName || "（未命名）";
+  $("uEmail").textContent = user.email || "";
+  unsubUser = onSnapshot(doc(db, "users", user.uid), (snap) => {
+    userData = snap.data();
+    $("uPoints").textContent = userData?.points ?? 0;
+    renderSubjects();
+  });
+  showScreen("app");
+});
+
+/* =====================================================================
+ * 5. 通行碼驗證
+ *    通行碼存在 Firestore config/access，Security Rules 禁止前端讀取。
+ *    前端把輸入值寫入 passcode_checks/{uid}，由「規則」比對是否等於
+ *    config/access.passcode：寫入成功 = 通行碼正確，失敗 = 錯誤。
+ * ===================================================================== */
+async function askPasscode(user) {
+  const result = await openModal({
+    title: "請輸入通行碼",
+    text: "請輸入通行碼以進入網站。",
+    okText: "驗證",
+    cancelText: "登出",
+    input: true,
+    onSubmit: async (value) => {
+      const code = value.trim();
+      if (!code) return "請輸入通行碼";
+      try {
+        await setDoc(doc(db, "passcode_checks", user.uid), { code, at: serverTimestamp() });
+        return null;
+      } catch (e) {
+        return e.code === "permission-denied" ? "通行碼錯誤，請再試一次" : "驗證失敗：" + e.code;
+      }
+    }
+  });
+  return result !== null;
+}
+
+// 新帳號：建立 users 文件並發放 10 點（建立規則限制只能是 10 點、無購買紀錄）
+async function ensureUserDoc(user) {
+  const ref = doc(db, "users", user.uid);
+  const snap = await getDoc(ref);
+  if (snap.exists()) return;
+  await setDoc(ref, {
+    email: user.email || "",
+    displayName: user.displayName || "",
+    points: WELCOME_POINTS,
+    purchased: [],
+    createdAt: serverTimestamp()
+  });
+  toast(`歡迎！已發放 ${WELCOME_POINTS} 點`);
+}
+
+/* =====================================================================
+ * 6. 依 CATALOG 動態渲染科目與題號
+ * ===================================================================== */
+const keyOf = (subject, q) => `${subject.id}-${q.no}`;
+
+function renderSubjects() {
+  const owned = new Set(userData?.purchased || []);
+  const root = $("subjects");
+  root.innerHTML = "";
+  CATALOG.forEach((subject) => {
+    const sec = document.createElement("section");
+    sec.className = "subject";
+    const ownedCount = subject.questions.filter((q) => owned.has(keyOf(subject, q))).length;
+    sec.innerHTML = `<h2>${subject.name}<small>已解鎖 ${ownedCount} / ${subject.questions.length}</small></h2>`;
+    const grid = document.createElement("div");
+    grid.className = "grid";
+    if (!subject.questions.length) grid.innerHTML = `<p class="empty">題目準備中</p>`;
+    subject.questions.forEach((q) => {
+      const isOwned = owned.has(keyOf(subject, q));
+      const btn = document.createElement("button");
+      btn.className = "q" + (isOwned ? " owned" : "");
+      btn.innerHTML = `<span class="no">第 ${q.no} 題</span><span class="state">${isOwned ? "已解鎖・點擊查看" : COST_PER_QUESTION + " 點解鎖"}</span>`;
+      btn.onclick = () => onQuestionClick(subject, q);
+      grid.appendChild(btn);
+    });
+    sec.appendChild(grid);
+    root.appendChild(sec);
+  });
+}
+
+/* =====================================================================
+ * 7. 點擊題目：已購買直接開啟；未購買先確認再以交易扣款
+ * ===================================================================== */
+async function onQuestionClick(subject, q) {
+  if (busy || !userData) return;
+  const key = keyOf(subject, q);
+
+  if ((userData.purchased || []).includes(key)) {
+    window.open(q.url, "_blank", "noopener");
+    return;
+  }
+  if (userData.points < COST_PER_QUESTION) {
+    toast(`點數不足，需要 ${COST_PER_QUESTION} 點，可使用序號兌換`);
+    return;
+  }
+
+  const ok = await openModal({
+    title: "確認解鎖",
+    text: `解鎖「${subject.name} 第 ${q.no} 題」將消耗 ${COST_PER_QUESTION} 點，目前剩餘 ${userData.points} 點。`,
+    okText: `消耗 ${COST_PER_QUESTION} 點`
+  });
+  if (!ok) return;
+
+  // 先同步開一個空白分頁，避免瀏覽器把「非同步之後才開的視窗」擋掉
+  const win = window.open("", "_blank");
+  busy = true;
+  try {
+    const ref = doc(db, "users", auth.currentUser.uid);
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref);
+      const d = snap.data();
+      if (d.purchased.includes(key)) return;                 // 已在別處買過，不重複扣款
+      if (d.points < COST_PER_QUESTION) throw new Error("NO_POINTS");
+      tx.update(ref, { points: d.points - COST_PER_QUESTION, purchased: [...d.purchased, key] });
+    });
+    if (win) win.location.href = q.url; else window.open(q.url, "_blank", "noopener");
+    toast("解鎖成功");
+  } catch (e) {
+    if (win) win.close();
+    toast(e.message === "NO_POINTS" ? "點數不足" : "解鎖失敗：" + (e.code || e.message));
+  } finally {
+    busy = false;
+  }
+}
+
+/* =====================================================================
+ * 8. 兌換序號：序號文件 id = 序號；同一個交易內標記已使用並加點
+ * ===================================================================== */
+$("redeemForm").onsubmit = async (e) => {
+  e.preventDefault();
+  if (busy) return;
+  const code = $("redeemInput").value.trim().toUpperCase();
+  if (!code || code.includes("/")) { toast("請輸入有效的序號"); return; }
+
+  busy = true; $("btnRedeem").disabled = true;
+  const uid = auth.currentUser.uid;
+  try {
+    const gained = await runTransaction(db, async (tx) => {
+      const codeRef = doc(db, "redemption_codes", code);
+      const userRef = doc(db, "users", uid);
+      const [codeSnap, userSnap] = await Promise.all([tx.get(codeRef), tx.get(userRef)]);
+      if (!codeSnap.exists()) throw new Error("NOT_FOUND");
+      if (codeSnap.data().used) throw new Error("USED");
+      const pts = codeSnap.data().points;
+      tx.update(codeRef, { used: true, usedBy: uid, usedAt: serverTimestamp() });
+      tx.update(userRef, { points: userSnap.data().points + pts, lastRedeemCode: code });
+      return pts;
+    });
+    $("redeemInput").value = "";
+    toast(`兌換成功，獲得 ${gained} 點`);
+  } catch (err) {
+    const map = { NOT_FOUND: "序號不存在", USED: "此序號已被使用" };
+    // 規則禁止讀取不存在的序號時也會回 permission-denied，一併視為序號無效
+    toast(map[err.message] || (err.code === "permission-denied" ? "序號無效或已被使用" : "兌換失敗：" + (err.code || err.message)));
+  } finally {
+    busy = false; $("btnRedeem").disabled = false;
+  }
+};
+</script>
+</body>
+</html>
