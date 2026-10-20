@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;900&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #eef1f6;
+    --bg: #ffffff;
     --paper: #ffffff;
     --ink: #1b2a4a;
     --ink-soft: #5b6784;
@@ -20,18 +20,17 @@
     --danger: #c0392b;
     --radius: 4px;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0f1626;
-      --paper: #18223a;
-      --ink: #e7ecf7;
-      --ink-soft: #94a0bd;
-      --line: #2c3856;
-      --accent: #3bb6c1;
-      --accent-ink: #08202a;
-      --unlocked: #f0b93a;
-      --danger: #ef7567;
-    }
+  /* 手動切換黑底時的變數 */
+  body.dark-mode {
+    --bg: #0f1626;
+    --paper: #18223a;
+    --ink: #e7ecf7;
+    --ink-soft: #94a0bd;
+    --line: #2c3856;
+    --accent: #3bb6c1;
+    --accent-ink: #08202a;
+    --unlocked: #f0b93a;
+    --danger: #ef7567;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
@@ -41,6 +40,7 @@
     color: var(--ink);
     line-height: 1.6;
     min-height: 100vh;
+    transition: background-color 0.2s, color 0.2s;
   }
   h1, h2 { font-family: "Noto Serif TC", serif; margin: 0; }
   button { font: inherit; cursor: pointer; }
@@ -97,6 +97,18 @@
     flex: 1 1 200px; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--radius);
     background: var(--bg); color: var(--ink); font: inherit; letter-spacing: .05em;
   }
+
+  /* ---------- 搜尋與篩選 ---------- */
+  .search {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 8px;
+  }
+  .search input, .search select {
+    padding: 9px 12px; border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--paper); color: var(--ink); font: inherit;
+  }
+  .search input { flex: 1 1 260px; }
+  .result-info { color: var(--ink-soft); font-size: .9rem; margin: 0 0 24px; min-height: 1.4em; }
+  .q .title { display: block; font-size: .85rem; color: var(--ink-soft); margin-bottom: 2px; }
   .subject { margin-bottom: 36px; }
   .subject h2 {
     font-size: 1.4rem; padding-bottom: 8px; margin-bottom: 16px;
@@ -120,7 +132,7 @@
 
   /* ---------- Modal ---------- */
   .overlay {
-    position: fixed; inset: 0; background: rgba(10, 16, 30, .6);
+    position: fixed; inset: 0; background: rgba(10, 16, 30, .4);
     display: grid; place-items: center; padding: 24px; z-index: 50;
   }
   .modal {
@@ -150,8 +162,7 @@
 <!-- 登入畫面 -->
 <section id="login" class="login" hidden>
   <div class="login-card">
-    <h1>解答解鎖站</h1>
-    <p>登入後輸入通行碼，即可使用點數解鎖題目解答。</p>
+    <h1>premuim</h1>
     <button id="btnLogin" class="btn primary">使用 Google 登入</button>
   </div>
 </section>
@@ -159,8 +170,10 @@
 <!-- 主畫面（通過登入與通行碼後才顯示） -->
 <div id="app" hidden>
   <header class="bar">
-    <div class="brand">解答解鎖站</div>
+    <div class="brand">premuim</div>
     <div class="account">
+      <!-- 新增的背景切換按鈕 -->
+      <button id="btnTheme" class="btn">黑/白</button>
       <div class="who"><strong id="uName"></strong><span id="uEmail"></span></div>
       <div class="points" aria-live="polite"><small>剩餘</small><b id="uPoints">0</b><small>點</small></div>
       <button id="btnLogout" class="btn">登出</button>
@@ -172,6 +185,17 @@
       <input id="redeemInput" autocomplete="off" placeholder="請輸入序號">
       <button class="btn primary" type="submit" id="btnRedeem">兌換</button>
     </form>
+    <div class="search">
+      <input id="searchInput" type="search" autocomplete="off"
+             placeholder="搜尋題目：科目、題號、標題或關鍵字（可用空白分隔多個詞）" aria-label="搜尋題目">
+      <select id="subjectFilter" aria-label="依科目篩選"></select>
+      <select id="statusFilter" aria-label="依狀態篩選">
+        <option value="all">全部狀態</option>
+        <option value="owned">已解鎖</option>
+        <option value="locked">未解鎖</option>
+      </select>
+    </div>
+    <p id="resultInfo" class="result-info" aria-live="polite"></p>
     <div id="subjects"></div>
   </main>
 </div>
@@ -193,61 +217,46 @@
 
 <script type="module">
 /* =====================================================================
- * 1. 開發者設定區
- * ===================================================================== */
+- 開發者設定區
+- ===================================================================== */
 
-// (A) Firebase 專案設定：Firebase Console → 專案設定 → 您的應用程式 → SDK 設定
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBsx2-oJT5K-DwBnFMskjSguWSTtOdvvyc",
+  authDomain: "premuim-37b50.firebaseapp.com",
+  projectId: "premuim-37b50",
+  storageBucket: "premuim-37b50.firebasestorage.app",
+  messagingSenderId: "888346833463",
+  appId: "1:888346833463:web:8c30dd7cdc53aa560ac5b2"
 };
 
-// (B) 題庫設定：新增科目或題目只需修改這裡，畫面會自動產生。
-//     每題的唯一鍵為「科目 id-題號」，購買紀錄以此為準，請勿在上線後更改 id。
 const CATALOG = [
   {
-    id: "chinese", name: "國文",
+    id: "class", name: "課堂",
     questions: [
-      { no: 1, url: "https://github.com" },
-      { no: 2, url: "https://github.com" },
-      { no: 3, url: "https://github.com" },
-      { no: 4, url: "https://github.com" },
-      { no: 5, url: "https://github.com" }
+      { no: 104,title: "讓電腦說哈囉" }
     ]
   },
   {
-    id: "math", name: "數學",
+    id: "add", name: "加分題",
     questions: [
-      { no: 1, url: "https://github.com" },
-      { no: 2, url: "https://github.com" },
-      { no: 3, url: "https://github.com" },
-      { no: 4, url: "https://github.com" },
-      { no: 5, url: "https://github.com" },
-      { no: 6, url: "https://github.com" }
+      { no: 112, title: "計算加權總分和加權平均" }
     ]
   },
   {
-    id: "science", name: "自然",
+    id: "zerojudge", name: "zerojudge",
     questions: [
-      { no: 1, url: "https://github.com" },
-      { no: 2, url: "https://github.com" },
-      { no: 3, url: "https://github.com" },
-      { no: 4, url: "https://github.com" }
+      { no: "a001", title: "哈囉" }
     ]
   }
 ];
 
-// (C) 數值設定。注意：Security Rules 內也寫死了 10 點，兩邊要一致。
 const COST_PER_QUESTION = 10;
 const WELCOME_POINTS = 10;
+const ANSWER_SOURCE = "firestore";
 
 /* =====================================================================
- * 2. Firebase 初始化
- * ===================================================================== */
+- 2. Firebase 初始化
+- ===================================================================== */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {
   getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
@@ -261,12 +270,12 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 /* =====================================================================
- * 3. 小工具：畫面切換、彈窗、提示
- * ===================================================================== */
+- 3. 小工具：畫面切換、彈窗、提示
+- ===================================================================== */
 const $ = (id) => document.getElementById(id);
 let unsubUser = null;
-let userData = null;      // 即時同步的 users/{uid} 資料
-let busy = false;         // 防止連點造成重複扣款
+let userData = null;
+let busy = false;
 
 function toast(msg) {
   const t = $("toast");
@@ -275,7 +284,11 @@ function toast(msg) {
   toast._t = setTimeout(() => (t.hidden = true), 2600);
 }
 
-// 通用彈窗：回傳 Promise。有 input 時，onSubmit 可回傳錯誤訊息字串來阻止關閉。
+// 切換黑白背景功能
+$("btnTheme").onclick = () => {
+  document.body.classList.toggle("dark-mode");
+};
+
 function openModal({ title, text, okText = "確認", cancelText = "取消", input = false, cancelable = true, onSubmit }) {
   return new Promise((resolve) => {
     $("mTitle").textContent = title;
@@ -307,14 +320,14 @@ function openModal({ title, text, okText = "確認", cancelText = "取消", inpu
   });
 }
 
-function showScreen(name) {   // "login" | "app" | "none"
+function showScreen(name) {
   $("login").hidden = name !== "login";
   $("app").hidden = name !== "app";
 }
 
 /* =====================================================================
- * 4. 登入 / 登出
- * ===================================================================== */
+- 4. 登入 / 登出
+- ===================================================================== */
 $("btnLogin").onclick = async () => {
   try { await signInWithPopup(auth, new GoogleAuthProvider()); }
   catch (e) { if (e.code !== "auth/popup-closed-by-user") toast("登入失敗：" + e.code); }
@@ -326,9 +339,9 @@ onAuthStateChanged(auth, async (user) => {
   userData = null;
   if (!user) { showScreen("login"); return; }
 
-  showScreen("none");                       // 通過通行碼前不顯示主要內容
+  showScreen("none");
   const ok = await askPasscode(user);
-  if (!ok) { await signOut(auth); return; } // 取消通行碼 → 登出
+  if (!ok) { await signOut(auth); return; }
   await ensureUserDoc(user);
 
   $("uName").textContent = user.displayName || "（未命名）";
@@ -342,11 +355,8 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 /* =====================================================================
- * 5. 通行碼驗證
- *    通行碼存在 Firestore config/access，Security Rules 禁止前端讀取。
- *    前端把輸入值寫入 passcode_checks/{uid}，由「規則」比對是否等於
- *    config/access.passcode：寫入成功 = 通行碼正確，失敗 = 錯誤。
- * ===================================================================== */
+- 5. 通行碼驗證
+- ===================================================================== */
 async function askPasscode(user) {
   const result = await openModal({
     title: "請輸入通行碼",
@@ -368,7 +378,6 @@ async function askPasscode(user) {
   return result !== null;
 }
 
-// 新帳號：建立 users 文件並發放 10 點（建立規則限制只能是 10 點、無購買紀錄）
 async function ensureUserDoc(user) {
   const ref = doc(db, "users", user.uid);
   const snap = await getDoc(ref);
@@ -384,44 +393,105 @@ async function ensureUserDoc(user) {
 }
 
 /* =====================================================================
- * 6. 依 CATALOG 動態渲染科目與題號
- * ===================================================================== */
+- 6. 依 CATALOG 動態渲染科目與題號
+- ===================================================================== */
 const keyOf = (subject, q) => `${subject.id}-${q.no}`;
+const filter = { text: "", subject: "all", status: "all" };
+
+function initFilters() {
+  const sel = $("subjectFilter");
+  sel.innerHTML = `<option value="all">全部科目</option>` +
+    CATALOG.map((sub) => `<option value="${sub.id}">${sub.name}</option>`).join("");
+
+  const input = $("searchInput");
+  const apply = () => { filter.text = input.value; renderSubjects(); };
+  input.addEventListener("input", (e) => { if (!e.isComposing) apply(); });
+  input.addEventListener("compositionend", apply);
+  sel.onchange = () => { filter.subject = sel.value; renderSubjects(); };
+  $("statusFilter").onchange = (e) => { filter.status = e.target.value; renderSubjects(); };
+}
+
+function matchesText(subject, q) {
+  const terms = filter.text.toLowerCase().split(/\s+/).filter(Boolean);
+  if (!terms.length) return true;
+  const hay = [subject.name, subject.id, q.title || "", ...(q.keywords || [])].join(" ").toLowerCase();
+  return terms.every((t) => {
+    const term = t.replace(/[第題题號号]/g, "");
+    if (!term) return true;
+    if (/^\d+$/.test(term)) return String(q.no) === term;
+    return hay.includes(term);
+  });
+}
 
 function renderSubjects() {
   const owned = new Set(userData?.purchased || []);
   const root = $("subjects");
   root.innerHTML = "";
+  let shown = 0;
+
   CATALOG.forEach((subject) => {
+    if (filter.subject !== "all" && filter.subject !== subject.id) return;
+
+    const ownedCount = subject.questions.filter((q) => owned.has(keyOf(subject, q))).length;
+    const list = subject.questions.filter((q) => {
+      const isOwned = owned.has(keyOf(subject, q));
+      if (filter.status === "owned" && !isOwned) return false;
+      if (filter.status === "locked" && isOwned) return false;
+      return matchesText(subject, q);
+    });
+    if (!list.length) return;
+    shown += list.length;
+
     const sec = document.createElement("section");
     sec.className = "subject";
-    const ownedCount = subject.questions.filter((q) => owned.has(keyOf(subject, q))).length;
     sec.innerHTML = `<h2>${subject.name}<small>已解鎖 ${ownedCount} / ${subject.questions.length}</small></h2>`;
     const grid = document.createElement("div");
     grid.className = "grid";
-    if (!subject.questions.length) grid.innerHTML = `<p class="empty">題目準備中</p>`;
-    subject.questions.forEach((q) => {
+    list.forEach((q) => {
       const isOwned = owned.has(keyOf(subject, q));
       const btn = document.createElement("button");
       btn.className = "q" + (isOwned ? " owned" : "");
-      btn.innerHTML = `<span class="no">第 ${q.no} 題</span><span class="state">${isOwned ? "已解鎖・點擊查看" : COST_PER_QUESTION + " 點解鎖"}</span>`;
+      const titleHtml = q.title ? `<span class="title"></span>` : "";
+      btn.innerHTML = `<span class="no">第 ${q.no} 題</span>${titleHtml}<span class="state">${isOwned ? "已解鎖・點擊查看" : COST_PER_QUESTION + " 點解鎖"}</span>`;
+      if (q.title) btn.querySelector(".title").textContent = q.title;
       btn.onclick = () => onQuestionClick(subject, q);
       grid.appendChild(btn);
     });
     sec.appendChild(grid);
     root.appendChild(sec);
   });
+
+  const filtering = filter.text.trim() || filter.subject !== "all" || filter.status !== "all";
+  if (!shown) root.innerHTML = `<p class="empty">找不到符合的題目，請換個關鍵字，或把篩選條件改回「全部」。</p>`;
+  $("resultInfo").textContent = filtering ? `找到 ${shown} 題` : "";
 }
 
+initFilters();
+
 /* =====================================================================
- * 7. 點擊題目：已購買直接開啟；未購買先確認再以交易扣款
- * ===================================================================== */
+- 7. 點擊題目處理
+- ===================================================================== */
+async function getAnswer(subject, q, key) {
+  if (ANSWER_SOURCE === "firestore") {
+    try {
+      const snap = await getDoc(doc(db, "answers", key));
+      return snap.exists() ? snap.data().answer : null;
+    } catch (e) { return null; }
+  }
+  return q.answer ?? null;
+}
+
+async function showAnswer(subject, q, key) {
+  const answer = await getAnswer(subject, q, key);
+  alert(answer ? `${subject.name} 第 ${q.no} 題 答案：\n\n${answer}` : "找不到答案，請聯絡管理員");
+}
+
 async function onQuestionClick(subject, q) {
   if (busy || !userData) return;
   const key = keyOf(subject, q);
 
   if ((userData.purchased || []).includes(key)) {
-    window.open(q.url, "_blank", "noopener");
+    await showAnswer(subject, q, key);
     return;
   }
   if (userData.points < COST_PER_QUESTION) {
@@ -436,22 +506,20 @@ async function onQuestionClick(subject, q) {
   });
   if (!ok) return;
 
-  // 先同步開一個空白分頁，避免瀏覽器把「非同步之後才開的視窗」擋掉
-  const win = window.open("", "_blank");
   busy = true;
   try {
     const ref = doc(db, "users", auth.currentUser.uid);
     await runTransaction(db, async (tx) => {
       const snap = await tx.get(ref);
       const d = snap.data();
-      if (d.purchased.includes(key)) return;                 // 已在別處買過，不重複扣款
+      if (d.purchased.includes(key)) return;
       if (d.points < COST_PER_QUESTION) throw new Error("NO_POINTS");
       tx.update(ref, { points: d.points - COST_PER_QUESTION, purchased: [...d.purchased, key] });
     });
-    if (win) win.location.href = q.url; else window.open(q.url, "_blank", "noopener");
     toast("解鎖成功");
+    busy = false;
+    await showAnswer(subject, q, key);
   } catch (e) {
-    if (win) win.close();
     toast(e.message === "NO_POINTS" ? "點數不足" : "解鎖失敗：" + (e.code || e.message));
   } finally {
     busy = false;
@@ -459,8 +527,8 @@ async function onQuestionClick(subject, q) {
 }
 
 /* =====================================================================
- * 8. 兌換序號：序號文件 id = 序號；同一個交易內標記已使用並加點
- * ===================================================================== */
+- 8. 兌換序號
+- ===================================================================== */
 $("redeemForm").onsubmit = async (e) => {
   e.preventDefault();
   if (busy) return;
@@ -485,7 +553,6 @@ $("redeemForm").onsubmit = async (e) => {
     toast(`兌換成功，獲得 ${gained} 點`);
   } catch (err) {
     const map = { NOT_FOUND: "序號不存在", USED: "此序號已被使用" };
-    // 規則禁止讀取不存在的序號時也會回 permission-denied，一併視為序號無效
     toast(map[err.message] || (err.code === "permission-denied" ? "序號無效或已被使用" : "兌換失敗：" + (err.code || err.message)));
   } finally {
     busy = false; $("btnRedeem").disabled = false;
