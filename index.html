@@ -9,38 +9,19 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;900&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #ffffff;
-    --paper: #ffffff;
-    --ink: #1b2a4a;
-    --ink-soft: #5b6784;
-    --line: #cdd5e3;
-    --accent: #0e7c86;
-    --accent-ink: #ffffff;
-    --unlocked: #e0a526;
-    --danger: #c0392b;
-    --radius: 4px;
+    --bg: #ffffff; --paper: #ffffff; --ink: #1b2a4a; --ink-soft: #5b6784; --line: #cdd5e3;
+    --accent: #0e7c86; --accent-ink: #ffffff; --unlocked: #e0a526; --danger: #c0392b; --radius: 4px;
   }
   /* 手動切換黑底時的變數 */
   body.dark-mode {
-    --bg: #0f1626;
-    --paper: #18223a;
-    --ink: #e7ecf7;
-    --ink-soft: #94a0bd;
-    --line: #2c3856;
-    --accent: #3bb6c1;
-    --accent-ink: #08202a;
-    --unlocked: #f0b93a;
-    --danger: #ef7567;
+    --bg: #0f1626; --paper: #18223a; --ink: #e7ecf7; --ink-soft: #94a0bd; --line: #2c3856;
+    --accent: #3bb6c1; --accent-ink: #08202a; --unlocked: #f0b93a; --danger: #ef7567;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
   body {
-    font-family: "Noto Sans TC", system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--ink);
-    line-height: 1.6;
-    min-height: 100vh;
-    transition: background-color 0.2s, color 0.2s;
+    font-family: "Noto Sans TC", system-ui, sans-serif; background: var(--bg); color: var(--ink);
+    line-height: 1.6; min-height: 100vh; transition: background-color 0.2s, color 0.2s;
   }
   h1, h2 { font-family: "Noto Serif TC", serif; margin: 0; }
   button { font: inherit; cursor: pointer; }
@@ -48,9 +29,7 @@
   [hidden] { display: none !important; }
 
   /* ---------- 登入畫面 ---------- */
-  .login {
-    min-height: 100vh; display: grid; place-items: center; padding: 24px;
-  }
+  .login { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
   .login-card {
     background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius);
     padding: 40px 32px; width: min(420px, 100%); text-align: center;
@@ -79,10 +58,7 @@
   .who { text-align: right; line-height: 1.3; }
   .who strong { display: block; font-size: .95rem; }
   .who span { font-size: .8rem; color: var(--ink-soft); }
-  .points {
-    display: flex; align-items: baseline; gap: 6px;
-    border: 2px solid var(--unlocked); border-radius: var(--radius); padding: 2px 12px;
-  }
+  .points { display: flex; align-items: baseline; gap: 6px; border: 2px solid var(--unlocked); border-radius: var(--radius); padding: 2px 12px; }
   .points b { font-family: "Noto Serif TC", serif; font-size: 1.5rem; }
   .points small { color: var(--ink-soft); }
 
@@ -99,9 +75,7 @@
   }
 
   /* ---------- 搜尋與篩選 ---------- */
-  .search {
-    display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 8px;
-  }
+  .search { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
   .search input, .search select {
     padding: 9px 12px; border: 1px solid var(--line); border-radius: var(--radius);
     background: var(--paper); color: var(--ink); font: inherit;
@@ -111,15 +85,13 @@
   .q .title { display: block; font-size: .85rem; color: var(--ink-soft); margin-bottom: 2px; }
   .subject { margin-bottom: 36px; }
   .subject h2 {
-    font-size: 1.4rem; padding-bottom: 8px; margin-bottom: 16px;
-    border-bottom: 3px solid var(--ink);
+    font-size: 1.4rem; padding-bottom: 8px; margin-bottom: 16px; border-bottom: 3px solid var(--ink);
     display: flex; justify-content: space-between; align-items: baseline;
   }
   .subject h2 small { font-family: "Noto Sans TC", sans-serif; font-weight: 400; font-size: .85rem; color: var(--ink-soft); }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
   .q {
-    position: relative; padding: 14px 12px 12px; text-align: left;
-    background: var(--paper); color: var(--ink);
+    position: relative; padding: 14px 12px 12px; text-align: left; background: var(--paper); color: var(--ink);
     border: 1px solid var(--line); border-left: 5px solid var(--line); border-radius: var(--radius);
     transition: border-color .15s, transform .15s;
   }
@@ -147,6 +119,17 @@
   }
   .modal .err { color: var(--danger); min-height: 1.5em; font-size: .9rem; margin: 0 0 8px; }
   .modal .actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+  /* ---------- 答案彈窗（可選取、可複製） ---------- */
+  .answer-modal { width: min(720px, 100%); }
+  .answer-modal pre {
+    margin: 0 0 16px; padding: 14px; max-height: 60vh; overflow: auto;
+    white-space: pre-wrap; overflow-wrap: anywhere;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Noto Sans TC", monospace;
+    font-size: .95rem; line-height: 1.6;
+    background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius);
+    user-select: text; -webkit-user-select: text; cursor: text;
+  }
 
   #toast {
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
@@ -180,7 +163,6 @@
   <header class="bar">
     <div class="brand">premuim</div>
     <div class="account">
-      <!-- 新增的背景切換按鈕 -->
       <button id="btnTheme" class="btn">黑/白</button>
       <div class="who"><strong id="uName"></strong><span id="uEmail"></span></div>
       <div class="points" aria-live="polite"><small>剩餘</small><b id="uPoints">0</b><small>點</small></div>
@@ -221,13 +203,22 @@
     </div>
   </div>
 </div>
+
+<!-- 答案彈窗 -->
+<div id="answerOverlay" class="overlay" hidden>
+  <div class="modal answer-modal" role="dialog" aria-modal="true" aria-labelledby="aTitle">
+    <h2 id="aTitle"></h2>
+    <pre id="aBody" tabindex="0"></pre>
+    <div class="actions">
+      <button id="aCopy" class="btn">複製答案</button>
+      <button id="aClose" class="btn primary">關閉</button>
+    </div>
+  </div>
+</div>
 <div id="toast" hidden></div>
 
 <script type="module">
-/* =====================================================================
-- 開發者設定區
-- ===================================================================== */
-
+/* ===================== 開發者設定區 ===================== */
 const firebaseConfig = {
   apiKey: "AIzaSyBsx2-oJT5K-DwBnFMskjSguWSTtOdvvyc",
   authDomain: "premuim-37b50.firebaseapp.com",
@@ -241,7 +232,7 @@ const CATALOG = [
   {
     id: "class", name: "課堂",
     questions: [
-      { no: 104,title: "讓電腦說哈囉" }
+      { no: 104, title: "讓電腦說哈囉" }
     ]
   },
   {
@@ -249,18 +240,18 @@ const CATALOG = [
     questions: [
       { no: 112, title: "計算加權總分和加權平均" },
       { no: 134, title: "[延伸活動] 輸入 5 科之測驗成績，輸出總分與平均" },
-      { no: 135, title: "[應用題5] 購物折扣" },
+      { no: 135, title: "[應用題5] 購物折扣" }
     ]
   },
   {
     id: "zerojudge", name: "zerojudge",
     questions: [
       { no: "a001", title: "哈囉" },
-      { no : "a002", title: "簡易加法" },
-      { no : "c726", title: "K-I-S-S-I-N-G (一行版)" },
-      { no : "d049", title: "中華民國萬歲！" },
-      { no : "d063", title: "0 與 1" },
-      { no : "e926", title: "跳脫字元" }
+      { no: "a002", title: "簡易加法" },
+      { no: "c726", title: "K-I-S-S-I-N-G (一行版)" },
+      { no: "d049", title: "中華民國萬歲！" },
+      { no: "d063", title: "0 與 1" },
+      { no: "e926", title: "跳脫字元" }
     ]
   }
 ];
@@ -269,9 +260,7 @@ const COST_PER_QUESTION = 10;
 const WELCOME_POINTS = 10;
 const ANSWER_SOURCE = "firestore";
 
-/* =====================================================================
-- 2. Firebase 初始化
-- ===================================================================== */
+/* ===================== Firebase 初始化 ===================== */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {
   getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
@@ -284,9 +273,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-/* =====================================================================
-- 3. 小工具：畫面切換、彈窗、提示
-- ===================================================================== */
+/* ===================== 小工具 ===================== */
 const $ = (id) => document.getElementById(id);
 let unsubUser = null;
 let userData = null;
@@ -299,10 +286,8 @@ function toast(msg) {
   toast._t = setTimeout(() => (t.hidden = true), 2600);
 }
 
-// 切換黑白背景功能
-$("btnTheme").onclick = () => {
-  document.body.classList.toggle("dark-mode");
-};
+// 切換黑白背景
+$("btnTheme").onclick = () => { document.body.classList.toggle("dark-mode"); };
 
 function openModal({ title, text, okText = "確認", cancelText = "取消", input = false, cancelable = true, onSubmit }) {
   return new Promise((resolve) => {
@@ -340,9 +325,7 @@ function showScreen(name) {
   $("app").hidden = name !== "app";
 }
 
-/* =====================================================================
-- 4. 登入 / 登出
-- ===================================================================== */
+/* ===================== 登入 / 登出 ===================== */
 $("btnLogin").onclick = async () => {
   try { await signInWithPopup(auth, new GoogleAuthProvider()); }
   catch (e) { if (e.code !== "auth/popup-closed-by-user") toast("登入失敗：" + e.code); }
@@ -369,9 +352,7 @@ onAuthStateChanged(auth, async (user) => {
   showScreen("app");
 });
 
-/* =====================================================================
-- 5. 通行碼驗證
-- ===================================================================== */
+/* ===================== 通行碼驗證 ===================== */
 async function askPasscode(user) {
   const result = await openModal({
     title: "請輸入通行碼",
@@ -407,9 +388,7 @@ async function ensureUserDoc(user) {
   toast(`歡迎！已發放 ${WELCOME_POINTS} 點`);
 }
 
-/* =====================================================================
-- 6. 依 CATALOG 動態渲染科目與題號
-- ===================================================================== */
+/* ===================== 依 CATALOG 渲染 ===================== */
 const keyOf = (subject, q) => `${subject.id}-${q.no}`;
 const filter = { text: "", subject: "all", status: "all" };
 
@@ -426,10 +405,11 @@ function initFilters() {
   $("statusFilter").onchange = (e) => { filter.status = e.target.value; renderSubjects(); };
 }
 
+// 純數字視為題號（精確比對）；其他文字比對科目、題號（含 a001 這類）、標題、關鍵字
 function matchesText(subject, q) {
   const terms = filter.text.toLowerCase().split(/\s+/).filter(Boolean);
   if (!terms.length) return true;
-  const hay = [subject.name, subject.id, q.title || "", ...(q.keywords || [])].join(" ").toLowerCase();
+  const hay = [subject.name, subject.id, String(q.no), q.title || "", ...(q.keywords || [])].join(" ").toLowerCase();
   return terms.every((t) => {
     const term = t.replace(/[第題题號号]/g, "");
     if (!term) return true;
@@ -446,7 +426,6 @@ function renderSubjects() {
 
   CATALOG.forEach((subject) => {
     if (filter.subject !== "all" && filter.subject !== subject.id) return;
-
     const ownedCount = subject.questions.filter((q) => owned.has(keyOf(subject, q))).length;
     const list = subject.questions.filter((q) => {
       const isOwned = owned.has(keyOf(subject, q));
@@ -483,24 +462,72 @@ function renderSubjects() {
 
 initFilters();
 
-/* =====================================================================
-- 7. 點擊題目處理
-- ===================================================================== */
+/* ===================== 答案讀取與顯示 ===================== */
 async function getAnswer(subject, q, key) {
   if (ANSWER_SOURCE === "firestore") {
     try {
       const snap = await getDoc(doc(db, "answers", key));
-      return snap.exists() ? snap.data().answer : null;
-    } catch (e) { return null; }
+      if (!snap.exists()) return { error: `Firestore 找不到文件 answers/${key}（文件 ID 要和題目鍵完全一致）` };
+      const a = snap.data().answer;
+      if (typeof a !== "string" || !a) return { error: `answers/${key} 沒有 answer 欄位，或它不是 string` };
+      return { answer: a };
+    } catch (e) {
+      console.error("讀取答案失敗：", key, e);
+      return { error: e.code === "permission-denied"
+        ? "權限不足：Rules 還沒加入 answers 區塊，或此題不在你的購買紀錄中"
+        : (e.code || e.message) };
+    }
   }
-  return q.answer ?? null;
+  return q.answer ? { answer: q.answer } : { error: `ANSWER_SOURCE 是 "config"，但 CATALOG 這一題沒有 answer 欄位` };
+}
+
+// 複製：優先用 Clipboard API，失敗時退回舊方法
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch (e) {}
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta); ta.select();
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) {}
+  ta.remove();
+  return ok;
+}
+
+// 答案彈窗：用 textContent 顯示，答案裡的 < > & 不會被當成 HTML
+function openAnswerModal(title, text, copyable) {
+  return new Promise((resolve) => {
+    $("aTitle").textContent = title;
+    $("aBody").textContent = text;
+    $("aCopy").hidden = !copyable;
+    $("aCopy").textContent = "複製答案";
+    $("answerOverlay").hidden = false;
+    $("aBody").scrollTop = 0;
+    $("aBody").focus();
+
+    const close = () => {
+      $("answerOverlay").hidden = true;
+      document.removeEventListener("keydown", onKey);
+      $("answerOverlay").onclick = $("aClose").onclick = $("aCopy").onclick = null;
+      resolve();
+    };
+    const onKey = (e) => { if (e.key === "Escape") close(); };
+    document.addEventListener("keydown", onKey);
+    $("aClose").onclick = close;
+    $("answerOverlay").onclick = (e) => { if (e.target === $("answerOverlay")) close(); };
+    $("aCopy").onclick = async () => {
+      const ok = await copyText(text);
+      $("aCopy").textContent = ok ? "已複製 ✓" : "複製失敗，請手動選取";
+    };
+  });
 }
 
 async function showAnswer(subject, q, key) {
-  const answer = await getAnswer(subject, q, key);
-  alert(answer ? `${subject.name} 第 ${q.no} 題 答案：\n\n${answer}` : "找不到答案，請聯絡管理員");
+  const r = await getAnswer(subject, q, key);
+  if (r.answer) await openAnswerModal(`${subject.name} 第 ${q.no} 題 答案`, r.answer, true);
+  else await openAnswerModal("找不到答案", `原因：${r.error}\n題目鍵：${key}\n\n請聯絡管理員`, false);
 }
 
+/* ===================== 點擊題目 ===================== */
 async function onQuestionClick(subject, q) {
   if (busy || !userData) return;
   const key = keyOf(subject, q);
@@ -541,9 +568,7 @@ async function onQuestionClick(subject, q) {
   }
 }
 
-/* =====================================================================
-- 8. 兌換序號
-- ===================================================================== */
+/* ===================== 兌換序號 ===================== */
 $("redeemForm").onsubmit = async (e) => {
   e.preventDefault();
   if (busy) return;
