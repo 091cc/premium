@@ -62,6 +62,10 @@
   .points b { font-family: "Noto Serif TC", serif; font-size: 1.5rem; }
   .points small { color: var(--ink-soft); }
 
+  .points.pass { flex-direction: column; align-items: flex-start; gap: 0; line-height: 1.3; border-color: var(--accent); }
+  .points.pass b { font-size: 1.05rem; color: var(--accent); }
+  .points.pass small { font-size: .75rem; }
+
   /* ---------- 主內容 ---------- */
   main { max-width: 960px; margin: 0 auto; padding: 24px; }
   .redeem {
@@ -165,7 +169,7 @@
     <div class="account">
       <button id="btnTheme" class="btn">黑/白</button>
       <div class="who"><strong id="uName"></strong><span id="uEmail"></span></div>
-      <div class="points" aria-live="polite"><small>剩餘</small><b id="uPoints">0</b><small>點</small></div>
+      <div id="pointsBox" class="points" aria-live="polite"><small>剩餘</small><b>0</b><small>點</small></div>
       <button id="btnLogout" class="btn">登出</button>
     </div>
   </header>
@@ -273,7 +277,7 @@ import {
   getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, setDoc, runTransaction, onSnapshot, serverTimestamp
+  getFirestore, doc, getDoc, setDoc, runTransaction, onSnapshot, serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const app = initializeApp(firebaseConfig);
@@ -332,6 +336,26 @@ function showScreen(name) {
   $("app").hidden = name !== "app";
 }
 
+/* ===================== 點數 / 通行證顯示 ===================== */
+const passUntilMs = () => userData?.passUntil?.toMillis?.() ?? 0;
+const hasPass = () => passUntilMs() > Date.now();
+const pad2 = (n) => String(n).padStart(2, "0");
+function fmtDate(ms) {
+  const d = new Date(ms);
+  return `${d.getFullYear()}/${pad2(d.getMonth() + 1)}/${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+let passState = null;
+function updateWallet() {
+  const box = $("pointsBox");
+  const active = hasPass();
+  box.classList.toggle("pass", active);
+  box.innerHTML = active
+    ? `<b>通行證</b><small>到期 ${fmtDate(passUntilMs())}</small>`
+    : `<small>剩餘</small><b>${userData?.points ?? 0}</b><small>點</small>`;
+  if (active !== passState) { passState = active; renderSubjects(); }   // 通行證開始/到期時，更新題目卡片文字
+}
+setInterval(() => { if (userData) updateWallet(); }, 30000);
+
 /* ===================== 登入 / 登出 ===================== */
 $("btnLogin").onclick = async () => {
   try { await signInWithPopup(auth, new GoogleAuthProvider()); }
@@ -353,7 +377,8 @@ onAuthStateChanged(auth, async (user) => {
   $("uEmail").textContent = user.email || "";
   unsubUser = onSnapshot(doc(db, "users", user.uid), (snap) => {
     userData = snap.data();
-    $("uPoints").textContent = userData?.points ?? 0;
+    passState = hasPass();
+    updateWallet();
     renderSubjects();
   });
   showScreen("app");
@@ -453,7 +478,7 @@ function renderSubjects() {
       const btn = document.createElement("button");
       btn.className = "q" + (isOwned ? " owned" : "");
       const titleHtml = q.title ? `<span class="title"></span>` : "";
-      btn.innerHTML = `<span class="no">第 ${q.no} 題</span>${titleHtml}<span class="state">${isOwned ? "已解鎖・點擊查看" : COST_PER_QUESTION + " 點解鎖"}</span>`;
+      btn.innerHTML = `<span class="no">第 ${q.no} 題</span>${titleHtml}<span class="state">${isOwned ? "已解鎖・點擊查看" : (hasPass() ? "通行證免費解鎖" : COST_PER_QUESTION + " 點解鎖")}</span>`;
       if (q.title) btn.querySelector(".title").textContent = q.title;
       btn.onclick = () => onQuestionClick(subject, q);
       grid.appendChild(btn);
@@ -535,12 +560,36 @@ async function showAnswer(subject, q, key) {
 }
 
 /* ===================== 點擊題目 ===================== */
+async function unlockWithPass(subject, q, key) {
+  busy = true;
+  try {
+    const ref = doc(db, "users", auth.currentUser.uid);
+    await runTransaction(db, async (tx) => {
+      const d = (await tx.get(ref)).data();
+      if (d.purchased.includes(key)) return;
+      if ((d.passUntil?.toMillis?.() ?? 0) <= Date.now()) throw new Error("PASS_EXPIRED");
+      tx.update(ref, { purchased: [...d.purchased, key] });   // 只新增紀錄，不動點數
+    });
+    toast("已用通行證解鎖");
+    busy = false;
+    await showAnswer(subject, q, key);
+  } catch (e) {
+    toast(e.message === "PASS_EXPIRED" ? "通行證已到期" : "解鎖失敗：" + (e.code || e.message));
+  } finally {
+    busy = false;
+  }
+}
+
 async function onQuestionClick(subject, q) {
   if (busy || !userData) return;
   const key = keyOf(subject, q);
 
   if ((userData.purchased || []).includes(key)) {
     await showAnswer(subject, q, key);
+    return;
+  }
+  if (hasPass()) {                       // 通行證期限內：不扣點，但仍寫入購買紀錄
+    await unlockWithPass(subject, q, key);
     return;
   }
   if (userData.points < COST_PER_QUESTION) {
@@ -585,22 +634,31 @@ $("redeemForm").onsubmit = async (e) => {
   busy = true; $("btnRedeem").disabled = true;
   const uid = auth.currentUser.uid;
   try {
-    const gained = await runTransaction(db, async (tx) => {
+    const res = await runTransaction(db, async (tx) => {
       const codeRef = doc(db, "redemption_codes", code);
       const userRef = doc(db, "users", uid);
       const [codeSnap, userSnap] = await Promise.all([tx.get(codeRef), tx.get(userRef)]);
       if (!codeSnap.exists()) throw new Error("NOT_FOUND");
-      if (codeSnap.data().used) throw new Error("USED");
-      const pts = codeSnap.data().points;
-      tx.update(codeRef, { used: true, usedBy: uid, usedAt: serverTimestamp() });
-      tx.update(userRef, { points: userSnap.data().points + pts, lastRedeemCode: code });
-      return pts;
+      const c = codeSnap.data();
+      if (c.used) throw new Error("USED");
+      const mark = { used: true, usedBy: uid, usedAt: serverTimestamp() };
+
+      if (Number.isInteger(c.passDays) && c.passDays > 0) {          // 通行證序號：延長到期日
+        const base = Math.max(Date.now(), userSnap.data().passUntil?.toMillis?.() ?? 0);
+        const until = Timestamp.fromMillis(base + c.passDays * 86400000);
+        tx.update(codeRef, mark);
+        tx.update(userRef, { passUntil: until, lastRedeemCode: code });
+        return { pass: true, days: c.passDays, until: until.toMillis() };
+      }
+      tx.update(codeRef, mark);                                        // 點數序號
+      tx.update(userRef, { points: userSnap.data().points + c.points, lastRedeemCode: code });
+      return { pass: false, points: c.points };
     });
     $("redeemInput").value = "";
-    toast(`兌換成功，獲得 ${gained} 點`);
+    toast(res.pass ? `兌換成功，通行證 +${res.days} 天，到期 ${fmtDate(res.until)}` : `兌換成功，獲得 ${res.points} 點`);
   } catch (err) {
     const map = { NOT_FOUND: "序號不存在", USED: "此序號已被使用" };
-    toast(map[err.message] || (err.code === "permission-denied" ? "序號無效或已被使用" : "兌換失敗：" + (err.code || err.message)));
+    toast(map[err.message] || (err.code === "permission-denied" ? "序號無效或已被使用（通行證序號請確認裝置時間正確）" : "兌換失敗：" + (err.code || err.message)));
   } finally {
     busy = false; $("btnRedeem").disabled = false;
   }
