@@ -135,6 +135,15 @@
     user-select: text; -webkit-user-select: text; cursor: text;
   }
 
+  /* ---------- 貼上提示 ---------- */
+  .paste-help { margin: 0 0 16px; font-size: .9rem; color: var(--ink-soft); }
+  .paste-help summary { cursor: pointer; font-weight: 500; color: var(--ink); }
+  .paste-help ol { margin: 8px 0 0; padding-left: 20px; }
+  .paste-help li { margin-bottom: 4px; }
+  .paste-help code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; background: var(--bg); border: 1px solid var(--line); border-radius: 3px; padding: 0 5px; color: var(--ink); }
+  .paste-help pre { max-height: none; margin: 8px 0; font-size: .85rem; padding: 10px 12px; }
+  .paste-help .btn { padding: 4px 12px; font-size: .85rem; }
+
   #toast {
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
     background: var(--ink); color: var(--bg); padding: 10px 20px; border-radius: var(--radius);
@@ -213,6 +222,17 @@
   <div class="modal answer-modal" role="dialog" aria-modal="true" aria-labelledby="aTitle">
     <h2 id="aTitle"></h2>
     <pre id="aBody" tabindex="0"></pre>
+    <details id="pasteHelp" class="paste-help">
+      <summary>貼上時被網站擋住？</summary>
+      <ol>
+        <li>在目標網頁按 <code>F12</code>（Mac 按 <code>Cmd + Option + I</code>），切到 <b>Console</b> 分頁。</li>
+        <li>先手動輸入 <code>allow pasting</code> 並按 Enter（瀏覽器的安全機制，沒做這步無法在 Console 貼上程式碼）。</li>
+        <li>再貼上下面這段程式碼，按 Enter。</li>
+        <li>回到網頁，就可以正常貼上了。重新整理網頁後需要重做一次。</li>
+      </ol>
+      <pre id="pasteSnippet"></pre>
+      <button id="copySnippet" type="button" class="btn">複製這段程式碼</button>
+    </details>
     <div class="actions">
       <button id="aCopy" class="btn">複製答案</button>
       <button id="aClose" class="btn primary">關閉</button>
@@ -547,6 +567,8 @@ function openAnswerModal(title, text, copyable) {
     $("aBody").textContent = text;
     $("aCopy").hidden = !copyable;
     $("aCopy").textContent = "複製答案";
+    $("pasteHelp").hidden = !copyable;      // 只有顯示答案時才出現貼上提示
+    $("pasteHelp").open = false;
     $("answerOverlay").hidden = false;
     $("aBody").scrollTop = 0;
     $("aBody").focus();
@@ -567,6 +589,16 @@ function openAnswerModal(title, text, copyable) {
     };
   });
 }
+
+const PASTE_FIX = `window.addEventListener('paste', function(e) {
+    e.stopPropagation();
+}, true);`;
+$("pasteSnippet").textContent = PASTE_FIX;
+$("copySnippet").onclick = async () => {
+  const btn = $("copySnippet");
+  btn.textContent = (await copyText(PASTE_FIX)) ? "已複製 ✓" : "複製失敗，請手動選取";
+  setTimeout(() => (btn.textContent = "複製這段程式碼"), 2000);
+};
 
 async function showAnswer(subject, q, key) {
   const r = await getAnswer(subject, q, key);
